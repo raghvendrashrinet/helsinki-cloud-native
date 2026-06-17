@@ -9,6 +9,9 @@ Run Container
 Port Fort local host to pod port
 > kubectl port-forward pod/web-app 3000:3000
 
+for deplyment port forwarding
+> kubectl port-forward deployment/web-server 3000:3005 
+
 Browse 
 `http://localhost:3000/`
 
