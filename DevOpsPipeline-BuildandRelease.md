@@ -1,8 +1,11 @@
 # DevOps Pipeline: Build, Package, and Release Cycle Blueprint
 
 This repository outlines a standardized, production-grade DevOps pipeline designed to guide applications from source code to a secure, monitored, and resilient production environment. It covers the core phases of the lifecycle: **Build**, **Package & Artifact Management**, **Release & Deployment**, and **Production Stability**.
+## Build Deploy Env
+![Build Deploy Env](BuildDevployReleaseCycle.jpg)
 
-
+## DevOps Flow
+![Build And Release Complete Flow](CompleteBuildReleaseFlow.jpeg)
 ---
 
 ## 1. The Build Phase
