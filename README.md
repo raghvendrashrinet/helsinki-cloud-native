@@ -2,10 +2,14 @@
 https://github.com/docker-hy/material-applications.git
 #### Folder Structure
 ```
-├── docker/
-│   ├── Notes/
-│   └── exercises/
-├── k8s/
-│   ├── manifests/
-│   └── notes/
-└── README.md 
+├── Docker/
+│  └── Create ReverseProxy&EdgeLayer-NginxTLS -App.md
+|  └── Projects
+|
+├── Kubernetes/
+└── BuildDevployReleaseCycle.jpg
+├── CompleteBuildReleaseFlow.jpeg
+├── DevOpsPipeline-BuildandRelease.md
+├── Node.js Project Setup & Execution.md
+├── frontend-architecture-guide.md
+└── README.md
