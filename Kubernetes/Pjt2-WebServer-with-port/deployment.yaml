@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: web-server
+  name: web-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web-server
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: web-server
+    spec:
+      containers:
+      - image: raghvendrashrinet/test:p2
+        name: test
+        env:
+        - name: PORT
+          value: "3005"
+        ports:
+        - containerPort: 3005
+
+        resources: {}
+status: {}
