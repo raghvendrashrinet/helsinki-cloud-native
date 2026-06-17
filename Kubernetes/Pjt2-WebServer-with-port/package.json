@@ -1,0 +1,14 @@
+{
+  "name": "my-execution-demo",
+  "version": "1.0.0",
+  "description": "Demo for npm run execution",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "test": "echo \"Running tests...\" && exit 0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
