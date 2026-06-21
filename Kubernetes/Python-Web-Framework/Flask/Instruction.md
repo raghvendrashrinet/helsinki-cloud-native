@@ -6,4 +6,4 @@
     python app_flask.py
    ```
 
-3. Go to `http://localhost:3005` in your browser to see it run.
+3. Go to `http://localhost:3000` in your browser to see it run.
