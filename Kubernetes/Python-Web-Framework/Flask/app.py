@@ -17,4 +17,4 @@ def home():
 
 if __name__ == '__main__':
     # We can bind it to port 3005 just like your Kubernetes apps!
-    app.run(host='0.0.0.0', port=3005)
+    app.run(host='0.0.0.0', port=3000)
