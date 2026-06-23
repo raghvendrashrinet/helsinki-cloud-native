@@ -118,22 +118,41 @@ According to your task instructions, you need to update the main configuration f
 
 ```
 http {
-    # 1. Define the group of backend App Servers
     upstream my_backend_servers {
-        server app_server1_ip:port; # Replace with actual App Server 1 details
-        server app_server2_ip:port; # Replace with actual App Server 2 details
-        server app_server3_ip:port; # Replace with actual App Server 3 details
+        server serv11:8089; # Replace with actual App Server 1 details
+        server serv2:8089; # Replace with actual App Server 2 details
+        server serv3:8089; # Replace with actual App Server 3 details
     }
 
     server {
-        listen 80;
-        server_name stlb01; # The LBR server hostname
+    listen       80;
+    listen       [::]:80;
+    server_name  _;
 
-        location / {
-            # 2. Pass the incoming request to the upstream group instead of looking for local files
-            proxy_pass http://my_backend_servers;
-        }
+ 
+    location / {
+        proxy_pass http://my_backend_servers;
+
+        # Recommended headers for proper load balancing
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
+
+    # Load configuration files for the default server block.
+    include /etc/nginx/default.d/*.conf;
+
+    error_page 404 /404.html;
+    location = /404.html {
+        root /usr/share/nginx/html; # Moved root here so errors can still find files
+    }
+
+    error_page 500 502 503 504 /50x.html;
+    location = /50x.html {
+        root /usr/share/nginx/html; # Moved root here so errors can still find files
+    }
+}
 }
 ```
 
