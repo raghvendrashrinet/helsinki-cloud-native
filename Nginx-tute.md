@@ -95,3 +95,62 @@ When Nginx isn't behaving, use this checklist to diagnose and fix the issue quic
 | `sudo systemctl restart nginx` | **Hard Restart** | Fully stops and starts the service. Use this if a reload doesn't apply your changes. |
 | `sudo systemctl status nginx` | **Check Status** | Tells you if Nginx is active (running) or failed, and shows recent error lines. |
 | `tail -f /var/log/nginx/error.log` | **Live Error Stream** | Keeps the terminal open to watch errors happen in real-time while you debug. |
+
+---
+## NGINX LOAD BALANCER  
+Nginx Server and Nginx LB (Load Balancer) are not two different pieces of software. They are the exact same program, but they are configured to do two entirely different jobs.  
+1. Nginx as a Web Server  
+When used as a standard web server, Nginx is responsible for hosting and delivering a website's files directly to the user.
+
+2. Nginx as a Load Balancer (LB)  
+When used as a Load Balancer, Nginx acts as a traffic cop sitting in front of multiple backend application servers. It does not host the website files itself.
+
+**What it does:**  
+When a user request comes in, Nginx evaluates which backend server (App Server 1, App Server 2, etc.) is the least busy and forwards the request to it. It then takes the response from that backend server and passes it back to the user.
+
+#### configuration-wise, they both are completely different.  
+When you configure Nginx as a Web Server, you tell it where to find files on the disk. When you configure it as a Load Balancer (LBR), you tell it the IP addresses of your backend App Servers.  
+
+1. **The Load Balancer Configuration**  
+To configure Nginx as a Load Balancer, you must define an upstream block (a group of backend servers) and use proxy_pass inside the `location block` to route the traffic to that group.  
+
+According to your task instructions, you need to update the main configuration file` (/etc/nginx/nginx.conf) inside the http { ... } context`:
+
+```
+http {
+    # 1. Define the group of backend App Servers
+    upstream my_backend_servers {
+        server app_server1_ip:port; # Replace with actual App Server 1 details
+        server app_server2_ip:port; # Replace with actual App Server 2 details
+        server app_server3_ip:port; # Replace with actual App Server 3 details
+    }
+
+    server {
+        listen 80;
+        server_name stlb01; # The LBR server hostname
+
+        location / {
+            # 2. Pass the incoming request to the upstream group instead of looking for local files
+            proxy_pass http://my_backend_servers;
+        }
+    }
+}
+```
+
+2. **Standard Web Server Configuration (For comparison)** 
+For a standard web server hosting a static site, you don't use upstream or proxy_pass. Instead, you point Nginx directly to a folder path using root:
+```
+http {
+    server {
+        listen 80;
+        server_name example.com;
+
+        # Points directly to the local folder holding index.html
+        root /var/www/html; 
+
+        location / {
+            try_files $uri $uri/ =404;
+        }
+    }
+}
+```
