@@ -9,7 +9,7 @@ argument can be defined two way
 - exec form is generally preferred over the shell form, because in the shell form the command that is executed is wrapped with /bin/sh -c, which can result in unexpected behaviour.
 - the shell form can be useful in certain situations, for example, when you need to evaluate environment variables in the command like $MYSQL_PASSWORD or similar.
 
-#### shell form, the command is provided as a string without brackets, see how they interpreted in different ways how gets prefxed by /bin/sh -c
+### shell form, the command is provided as a string without brackets, see how they interpreted in different ways how gets prefxed by: /bin/sh -c
 
 | Dockerfile | Resulting command |
 | :--- | :--- |
