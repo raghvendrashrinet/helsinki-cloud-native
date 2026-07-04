@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: dep-loggen
+  name: dep-loggen
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dep-loggen
+  template:
+    metadata:
+      labels:
+        app: dep-loggen
+    spec:
+      volumes:
+      - name: myvol
+        emptyDir: {}
+
+      # 1. Init Container runs first to guarantee log.txt is a FILE, not a folder
+      initContainers:
+      - name: init-log-file
+        image: busybox:stable
+        command: ['sh', '-c', 'touch /mnt/shared/log.txt']
+        volumeMounts:
+        - name: myvol
+          mountPath: /mnt/shared
+
+      containers:
+      # 2. Your Log Generator Container
+      - image: raghvendrashrinet/projects:hashgenv1
+        name: logout
+        volumeMounts:
+        - name: myvol
+          mountPath: /app/log.txt
+          subPathExpr: log.txt       # Uses subPathExpr to safely mount the file
+
+      # 3. Your Web App Container
+      - image: raghvendrashrinet/projects:webappv1
+        name: webapp
+        volumeMounts:
+        - name: myvol
+          mountPath: /app/log.txt
+          subPathExpr: log.txt       # Uses subPathExpr to safely mount the file
