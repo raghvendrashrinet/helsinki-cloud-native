@@ -100,3 +100,7 @@ kubectl apply -f ingress.yaml
 ```
 Open your web browser and go straight to:
 `http://localhost:8081`
+
+Get Container name using json path:
+- Pod :`kubectl get pod <pod-name> -o jsonpath='{.spec.containers[*].name}'`  
+- Deployment : `kubectl get deployment dep-loggen -o jsonpath='{.spec.template.spec.containers[*].name}'`
