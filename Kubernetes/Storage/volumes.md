@@ -29,7 +29,7 @@ To use a local volume properly, you define a cluster-level `PersistentVolume (PV
 
 Instead of an administrator manually logging into a cloud console to carve out a virtual disk every time a developer asks for storage, the StorageClass handles it automatically behind the scenes.
 1. Dynamic Provisioning (No More Manual Work)
-   ithout a StorageClass, an administrator has to pre-create a pool of physical disks (PersistentVolumes). With a StorageClass, when a user creates a PersistentVolumeClaim (PVC), the cluster automatically talks to your cloud or storage provider (AWS, GCP, Azure, Ceph, etc.) and spins up the disk on demand.
+   Without a StorageClass, an administrator has to pre-create a pool of physical disks (PersistentVolumes). With a StorageClass, when a user creates a PersistentVolumeClaim (PVC), the cluster automatically talks to your cloud or storage provider (AWS, GCP, Azure, Ceph, etc.) and spins up the disk on demand.
 2. Abstracting Infrastructure
 Developers don't need to know whether the application is running on AWS, Azure, or an on-premise data center. They just ask for a StorageClass by name (e.g., fast-storage), and Kubernetes handles the cloud-specific details.
 3. Tiered Storage Quality
