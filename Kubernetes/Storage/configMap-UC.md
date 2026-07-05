@@ -148,3 +148,26 @@ spec:
 ```
  kubectl create configmap app-file-config --from-file=config.properties
 ```
+---
+When you update a ConfigMap or a Secret in Kubernetes, what happens to the injected values depends entirely on how you injected them into your Pods.  
+Kubernetes does not automatically restart your pods when a ConfigMap or Secret changes.  
+**Scenario 1: Injected as Environment Variables (env or envFrom)**
+- What happens: ❌ Nothing changes inside the running container.
+- Environment variables are strictly evaluated and injected only when the container starts up. If you update the ConfigMap or Secret on the cluster, the running application will continue to see the old values.
+- `How to apply the change`: You must trigger a rolling restart of your deployment so new pods are created with the new values:
+  ```
+    kubectl rollout restart deployment/<deployment-name>
+  ```
+**Scenario 2: Mounted as Volumes (Without subPath)**
+- What happens:  The files update automatically (eventually).
+- The Kubelet daemon on the node watches for changes. Within a couple of minutes (depending on the Kubelet's sync cache interval, usually up to 60 seconds), the files inside your container’s mounted directory will quietly update to reflect the new data.
+- Caveat: Your application code needs to be designed to actively re-read or "hot-reload" that file from disk when it changes  
+
+**Scenario 3: Mounted as Files using subPath or subPathExpr**
+ - What happens: ❌ The files will NOT update.
+ -  The Details: When you use subPath,Kubernetes binds that specific file directly to the container at launch time. Because it is an isolated bind-mount, it breaks the connection to the automatic update utility. The file inside the container becomes completely static.
+ -  Apply
+   ```
+   
+    kubectl rollout restart deployment/<deployment-name>
+   ```
