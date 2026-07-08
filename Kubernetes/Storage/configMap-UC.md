@@ -158,10 +158,22 @@ Kubernetes does not automatically restart your pods when a ConfigMap or Secret c
   ```
     kubectl rollout restart deployment/<deployment-name>
   ```
+  
 **Scenario 2: Mounted as Volumes (Without subPath)**
 - What happens:  The files update automatically (eventually).
 - The Kubelet daemon on the node watches for changes. Within a couple of minutes (depending on the Kubelet's sync cache interval, usually up to 60 seconds), the files inside your container’s mounted directory will quietly update to reflect the new data.
-- Caveat: Your application code needs to be designed to actively re-read or "hot-reload" that file from disk when it changes  
+- Caveat: Your application code needs to be designed to actively re-read or "hot-reload" that file from disk when it changes
+
+  if not updating  
+  For Individual Pods
+  ```
+  
+   kubectl get pod nginx-phpfpm -o yaml | kubectl replace --force -f -
+  ```
+  For deployments
+  ```
+   kubectl rollout restart deployment <deployment-name>
+  ```
 
 **Scenario 3: Mounted as Files using subPath or subPathExpr**
  - What happens: ❌ The files will NOT update.
