@@ -60,6 +60,7 @@ Any change to the Pod template (e.g., changing the image tag, labels, or environ
     ```
      kubectl set image deployment/core-api api-server=nginx:1.25.2
     ```
+    `api-server is the name of the specific container inside your Pod that you want to update.`
   - The Manual Trigger (Forcing a restart): If you updated a ConfigMap or Secret and need the pods to pick up the changes, force a restart without configuration modifications:
   - ```
      kubectl rollout restart deployment/core-api
