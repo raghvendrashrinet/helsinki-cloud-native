@@ -144,3 +144,41 @@ If your goal is to safely empty a node completely (for maintenance or because it
 kubectl drain <node-name> --ignore-daemonsets --delete-emptydir-data
 ```
 
+
+### Pod anti-affinity 
+is a feature in Kubernetes used to ensure that specific Pods do not run on the same nodes (or within the same zones/topologies) as each other
+🧠 Why Use It?
+ - High Availability (HA): If you run three replicas of an nginx web server, you don't want all of them scheduled on the same physical node
+ - Resource Conflict Prevention: You can prevent two CPU-heavy or memory-heavy Pods from being scheduled on the same node
+
+##### 🛠️ How it Works in a Manifest
+```
+apiVersion: apps/v1
+kind: Deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web-nginx
+  template:
+    metadata:
+      labels:
+        app: web-nginx
+---
+spec:
+      affinity:
+        podAntiAffinity:
+          # "Hard" rule: The scheduler MUST NOT place these pods together
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - web-nginx
+            # TopologyKey defines the scope (e.g., "kubernetes.io/hostname" means individual nodes)
+            topologyKey: "kubernetes.io/hostname"
+     containers:
+       - name: nginx
+         image: nginx
+```
