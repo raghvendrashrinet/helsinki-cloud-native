@@ -138,3 +138,9 @@ If you apply a taint with the NoExecute effect, Kubernetes will immediately evic
  - Pods with a matching toleration will stay.
 
 *NoSchedule & PreferNoSchedule* -> They only affect new scheduling decisions
+### 💡 Alternative: kubectl drain
+If your goal is to safely empty a node completely (for maintenance or because it is failing), the standard best practice is to drain the node instead of manually applying a taint:
+```
+kubectl drain <node-name> --ignore-daemonsets --delete-emptydir-data
+```
+
