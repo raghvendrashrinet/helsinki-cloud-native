@@ -130,3 +130,11 @@ affinity:
 - **PreferNoSchedule:** Scheduler avoids node but can place Pod if needed.
 
 - **NoExecute:** Evicts existing Pods unless they tolerate the taint.
+
+### 🚫 The Magic Effect: NoExecute
+If you apply a taint with the NoExecute effect, Kubernetes will immediately evict ("pull out") any running Pods that do not tolerate this taint.
+`kubectl taint nodes <node-name> key=value:NoExecute`
+ - Any Pod on that node without a matching toleration is evicted immediately
+ - Pods with a matching toleration will stay.
+
+*NoSchedule & PreferNoSchedule* -> They only affect new scheduling decisions
