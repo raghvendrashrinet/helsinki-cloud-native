@@ -1,0 +1,1 @@
+secerets and configmap
