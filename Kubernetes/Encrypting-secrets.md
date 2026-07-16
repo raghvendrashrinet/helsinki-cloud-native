@@ -23,7 +23,7 @@ First, you run a command to generate your keys.
 Imagine you have a Kubernetes web application that needs a database password to run.  
 The Secret Password: `super-secret-db-pass`
 
-The Goal: Store your Kubernetes configuration file on GitHub so your team can use it, but without exposing that database password to the public.
+> The Goal: Store your Kubernetes configuration file on GitHub so your team can use it, but without exposing that database password to the public.
 
 **Step 1:** Create your Lock and Key
 First, you need to generate a key pair. We use a tool called age to do this.
