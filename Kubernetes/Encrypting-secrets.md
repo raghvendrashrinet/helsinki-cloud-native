@@ -6,9 +6,13 @@
 ####   The Solution: The Cast of Characters
 To solve this, the chapter introduces two tools that work together:
 1. **age (The Lock & Key Maker)**: This tool creates a unique, incredibly secure padlock (the Public Key) and a matching physical key (the Private/Secret Key).
+ ```bash
+   #Install in windows
+    winget install --id FiloSottile.age     or choco install age.portable
+  ```
 
 2. **SOPS (The Smart Assistant)**: This tool takes your Kubernetes document, finds the sensitive parts, and uses your age padlock to lock them up.
-
+ [Install URL](https://www.soapui.org/downloads/thank-you-for-downloading-soapui/)
 ###### Step 1: You create your lock and key
 First, you run a command to generate your keys.  
 - You get a Public Key (which you can show to anyone). Think of this as an open padlock.
