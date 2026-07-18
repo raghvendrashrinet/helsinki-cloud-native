@@ -12,7 +12,13 @@ To solve this, the chapter introduces two tools that work together:
   ```
 
 2. **SOPS (The Smart Assistant)**: This tool takes your Kubernetes document, finds the sensitive parts, and uses your age padlock to lock them up.
- [Install URL](https://www.soapui.org/downloads/thank-you-for-downloading-soapui/)
+```
+# Install Scoop if you haven't already
+iwr -useb get.scoop.sh | iex
+
+# Install SOPS
+scoop install sops
+```
 ###### Step 1: You create your lock and key
 First, you run a command to generate your keys.  
 - You get a Public Key (which you can show to anyone). Think of this as an open padlock.
