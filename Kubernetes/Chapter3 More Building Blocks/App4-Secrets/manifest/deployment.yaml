@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: imageapi-dep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: imageapi
+  template:
+    metadata:
+      labels:
+        app: imageapi
+    spec:
+      containers:
+        - name: imageagain
+          image: jakousa/dwk-app4:b7fc18de2376da80ff0cfc72cf581a9f94d10e64
+          envFrom:
+          - secretRef:
+              name: pixabay-apikey
