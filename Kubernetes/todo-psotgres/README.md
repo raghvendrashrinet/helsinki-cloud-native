@@ -187,3 +187,26 @@ spec:
             - name: DATABASE_URL
               value: "postgresql://todo_user:todo_password@postgres-svc:5432/todo_db"
 ```
+---
+### Step 5: Order of Deployment
+When applying the changes, execute them in this specific order:
+```bash
+# 1. Deploy PostgreSQL (StatefulSet & Service)
+kubectl apply -f manifests/postgres-db.yaml
+
+# 2. Wait until PostgreSQL is ready
+kubectl wait --for=condition=ready pod -l app=postgres --timeout=60s
+
+# 3. Run the Database Migration Job
+kubectl apply -f manifests/db-migration-job.yaml
+
+# 4. Wait for the Migration Job to finish successfully
+kubectl wait --for=condition=complete job/postgres-migration-job --timeout=60s
+
+# 5. Apply remaining Frontend, Backend, Services, and Ingress
+kubectl apply -f manifests/backend-deployment.yaml
+kubectl apply -f manifests/backend-svc.yaml
+kubectl apply -f manifests/frontend-deployment.yaml
+kubectl apply -f manifests/frontend-svc.yaml
+kubectl apply -f manifests/ingress.yaml
+```
