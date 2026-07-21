@@ -1,7 +1,6 @@
 ### Here is the basic blueprint for getting your To-Do app to talk to a PostgreSQL database:
-#### 1. The Database and Table (The Filing Cabinet)  
-   You don't need a separate database for every table. Instead, you create one main database (e.g., todo_app_db) and inside it, you create tables to organize your items.
-   Think of a table as a grid of rows and columns. For your To-Do list, you might create a table named tasks with these columns:
+#### 1. The Database and Table 
+ you create one main database (e.g., todo_app_db) and inside it, you create tables to organize your items.
     - id: A unique number for every task so they don't get mixed up.
     - title: The name of the task (e.g., "Buy groceries").
     - status: Whether it's "pending" or "completed".
@@ -30,10 +29,47 @@ To make your Python app talk to PostgreSQL,you will use a popular Python tool ca
 - 1. Install PostgreSQL
      * Download and install the PostgreSQL server on your computer.
      * Set up a master password during installation (keep this password handy).
+       ```
+       apt install postgresql postgresql-contrib
+
+       systemctl start postgresql
+       systemctl enable postgresql
+
+       
+       ```
+      > 2. Access the PostgreSQL Prompt
+      ```
+       sudo -i -u postgres
+       psql
+      ```
+      > 3. Set a Password for the Admin User
+      ```sql
+      ALTER USER postgres WITH PASSWORD 'your_secure_password';
+      ```
+      > 4. Create a New User
+      ```
+      CREATE USER myuser WITH PASSWORD 'my_user_password';
+      Verify
+      psql -U myuser -d mydb -h 127.0.0.1 -W
+
+      ```
+       
 - 2. Create the Database and Table
      * Open the PostgreSQL terminal (psql) or a visual tool like pgAdmin.
-     * Run a command to create your database container: CREATE DATABASE todo_db;
+     * Run a command to create your database container:
+     ```sql
+      CREATE DATABASE todo_db;
+     ````
+-    * Check DB
+     - Using the meta-command (Fastest):
+       ` /l`
+     - Using sql query
+       ```sql
+       SELECT datname FROM pg_database WHERE datistemplate = false;
+       ```
+       
      * Run a command to create your grid table inside that database:
+     * Enter DB : `\c todo_db   `
        ```sql
        CREATE TABLE tasks (
        id SERIAL PRIMARY KEY,
@@ -41,6 +77,12 @@ To make your Python app talk to PostgreSQL,you will use a popular Python tool ca
        status VARCHAR(50) DEFAULT 'pending'
         );
        ```
+       Check Table
+       ```sql
+       \c todo_db                     => in mysql we use cmd  : USE todo_db 
+       SELECT * FROM tasks;
+       ```
+       List all table : `\dt`
 - 3. Install the Python Driver.
      Install the driver package that lets Python talk to Postgres:
      ` pip install psycopg2-binary`
