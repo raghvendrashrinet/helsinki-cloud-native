@@ -233,3 +233,206 @@ graph TD
     style J fill:#bfb,stroke:#333,stroke-width:2px
 ```
 
+---
+### DB could be external DB or Deployed over K8s Statefullset
+
+#### deploy PostgreSQL as a StatefulSet, expose it via a Headless Service, and connect your FastAPI app to it.
+
+1. Credentials & Configuration (Secret & ConfigMap)
+First, store database credentials securely using a Secret, and configuration values in a ConfigMap
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-secret
+type: Opaque
+stringData:
+  POSTGRES_USER: myuser
+  POSTGRES_PASSWORD: my_user_password
+  POSTGRES_DB: todo_db
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-config
+data:
+  POSTGRES_PORT: "5432"
+```
+
+2. PostgreSQL StatefulSet & Headless Service
+The StatefulSet ensures that each PostgreSQL pod receives a predictable network identity (e.g., postgres-0) and retains its attached storage (PersistentVolumeClaim) even if the pod restarts or moves nodes.
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+spec:
+  clusterIP: None  # Headless Service for StatefulSet identity
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+spec:
+  serviceName: "postgres-service"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgresql
+          image: postgres:15-alpine
+          ports:
+            - containerPort: 5432
+              name: postgresql
+          envFrom:
+            - secretRef:
+                name: postgres-secret
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+              subPath: postgres  # Prevents mount conflicts on lost+found
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "myuser", "-d", "todo_db"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "myuser", "-d", "todo_db"]
+            initialDelaySeconds: 15
+            periodSeconds: 10
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 5Gi
+```
+
+#### Step 2.1: Postgres Container Boots Up
+When Kubernetes launches the PostgreSQL Pod from the standard postgres:15-alpine image, the entrypoint script inside the image kicks off automatically.
+
+##### Option A: Mounting Initialization SQL Scripts (initdb.d)
+he official Postgres image automatically runs any .sql scripts placed inside /docker-entrypoint-initdb.d/ only once during initial setup.  
+1. Define a ConfigMap with your SQL:
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-script
+data:
+  init.sql: |
+    CREATE TABLE IF NOT EXISTS tasks (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        completed BOOLEAN DEFAULT FALSE
+    );
+```
+2. Mount it into the StatefulSet:
+```yaml
+volumeMounts:
+  - name: init-sql
+    mountPath: /docker-entrypoint-initdb.d
+volumes:
+  - name: init-sql
+    configMap:
+      name: postgres-init-script
+```
+* Result: Postgres executes init.sql automatically right after creating todo_db, so all tables exist before your FastAPI app even attempts to connect.
+
+##### Option B: Running a Kubernetes Migration Job
+In production pipelines, rather than embedding SQL in a ConfigMap, table creation is handled by running a Kubernetes Job (executing database migration tools like Alembic or Liquibase) as part of your deployment process:
+```
+[1. StatefulSet Starts & Creates todo_db] ──> [2. K8s Job Runs Schema Migrations] ──> [3. App Deployment Starts]
+
+```
+1 .Kubernetes Job using `Alembic` before your main application starts.
+Step 1: Write Your Alembic Migration Code
+In your app repository, Alembic manages database changes in code.
+
+`alembic/versions/001_create_tasks_table.py`
+```python
+from alembic import op
+import sqlalchemy as sa
+
+revision = '001'
+down_revision = None
+
+def upgrade():
+    op.create_table(
+        'tasks',
+        sa.Column('id', sa.Integer, primary_key=True),
+        sa.Column('title', sa.String(255), nullable=False),
+        sa.Column('description', sa.Text),
+        sa.Column('completed', sa.Boolean, server_default='false')
+    )
+
+def downgrade():
+    op.drop_table('tasks')
+```
+Step 2: Define the Migration Kubernetes Job Manifest
+This Job runs a single short-lived container that uses your application image to execute`alembic upgrade head`against your PostgreSQL service.
+
+`db-migration-job.yaml`
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: postgres-migration-job
+spec:
+  # Automatically delete completed job pod after 100 seconds to keep cluster clean
+  ttlSecondsAfterFinished: 100 
+  template:
+    metadata:
+      name: migration-runner
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: alembic-migration
+          image: my-fastapi-app:v1  # Your application image containing code & alembic
+          command: ["alembic", "upgrade", "head"]
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://myuser:my_user_password@postgres-service:5432/todo_db"
+```
+
+
+Step 3: CI/CD Pipeline Order of Execution
+In your deployment pipeline (e.g., GitHub Actions, GitLab CI, or Jenkins), the steps run sequentially:
+```bash
+# 1. Apply StatefulSet (Ensures Postgres Pod is up and running)
+kubectl apply -f postgres-statefulset.yaml
+
+# 2. Wait for Postgres to be healthy
+kubectl wait --for=condition=ready pod -l app=postgres --timeout=60s
+
+# 3. Trigger the Migration Job to create/update tables
+kubectl apply -f db-migration-job.yaml
+
+# 4. Wait for the Migration Job to complete successfully
+kubectl wait --for=condition=complete job/postgres-migration-job --timeout=60s
+
+# 5. Roll out the FastAPI Application Deployment
+kubectl apply -f app-deployment.yaml
+```
+
+###### Why Option B is Preferred in Production
+Version Controlled: Every database schema change is tracked in Git alongside application code.
+
+Zero Runtime Overhead: Your main FastAPI pods do not waste startup time running checks or migration code.
+
+Safe Rollbacks: Alembic supports downgrade scripts if you ever need to revert a release.
