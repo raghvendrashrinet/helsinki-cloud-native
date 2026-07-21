@@ -151,3 +151,39 @@ def add_todo():
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=3000)
 ```
+---
+
+### Step 4: Add initContainers to backend-deployment.yaml
+To ensure the todo-backend pods do not crash if Postgres or the migration takes a few seconds to boot, add an initContainer to manifests/backend-deployment.yaml:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: todo-backend
+  template:
+    metadata:
+      labels:
+        app: todo-backend
+    spec:
+      initContainers:
+        # Wait for Postgres port to respond before starting Flask backend
+        - name: wait-for-postgres
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - "until nc -z postgres-svc 5432; do echo 'Waiting for Postgres...'; sleep 2; done;"
+      containers:
+        - name: backend
+          image: <your-docker-hub-username>/todo-backend:v2
+          ports:
+            - containerPort: 3000
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://todo_user:todo_password@postgres-svc:5432/todo_db"
+```
