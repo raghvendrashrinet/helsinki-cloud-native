@@ -80,3 +80,26 @@ spec:
           requests:
             storage: 2Gi
 ```
+---
+### Step 2: Set Up Database Migration (Job)
+Rather than having backend.py create tables at runtime, use a Kubernetes Job to create the tables before deploying the backend pods.
+
+Create manifests/db-migration-job.yaml:
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: postgres-migration-job
+spec:
+  ttlSecondsAfterFinished: 120
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: db-migrator
+          image: <your-docker-hub-username>/todo-backend:v2 # Your built backend image
+          command: ["alembic", "upgrade", "head"]
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://todo_user:todo_password@postgres-svc:5432/todo_db"
+```
