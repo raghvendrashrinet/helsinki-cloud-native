@@ -14,7 +14,8 @@ spec:
     spec:
       containers:
         - name: pingpong
-          image: raghvendrashrinet/ping-postgres:latest
+          image: raghvendrashrinet/ping-postgres2:latest # Update with your image tag
+          imagePullPolicy: Always
           ports:
             - containerPort: 5000
           env:
