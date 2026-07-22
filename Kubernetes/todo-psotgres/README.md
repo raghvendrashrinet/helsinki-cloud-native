@@ -19,6 +19,66 @@
     └── ingress.yaml
 
 ```
+Frontend-> Backend -> DB Flow 
+```
++-------------------+
+|   User Request    |
+|   (HTTP / API)    |
++-------------------+
+          |
+          v
++-----------------------------+
+|   App Pod Logic             |
+|-----------------------------|
+|1.Load DB Connection string  |
+|   "postgresql://.../todo_db"|
+| 2. Parse into components:   |
+|    - user: todo_user        |
+|    - password: todo_password|
+|    - host: postgres-svc     |
+|    - port: 5432             |
+|    - db: todo_db            |
+| 3. Open connection          |
+|-----------------------------|
+| 1. Receive request          |
+| 2. Extract "id" (string)    |
+|    e.g. id = "123"          |
+| 3. Build query string:      |
+|    "SELECT * FROM users     |
+|     WHERE id = '123';"      |
+| 4. Send query to DB Service |
++-----------------------------+
+          |
+          v
++-------------------+
+|   DB Service      |
+|   ClusterIP:5432  |
++-------------------+
+          |
+          v
++-----------------------------+
+|   DB Pod (PostgreSQL/MySQL) |
+|-----------------------------|
+| 1. Parse SQL string         |
+| 2. Execute query            |
+| 3. Return result set        |
++-----------------------------+
+          |
+          v
++-------------------+
+|   App Pod Logic   |
+|-------------------|
+| 5. Process rows   |
+| 6. Format JSON    |
+| 7. Send response  |
++-------------------+
+          |
+          v
++-------------------+
+|   User Response   |
++-------------------+
+```
+
 ### Step 1: Add Database Secrets & StatefulSet
 Create `manifests/postgres-db.yaml` to deploy PostgreSQL with persistent storage.
 ```yaml
