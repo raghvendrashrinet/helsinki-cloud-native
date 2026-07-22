@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: pingpong
-          image: <your-docker-hub-username>/pingpong:latest # Update with your image tag
+          image: raghvendrashrinet/ping-postgres:latest
           ports:
             - containerPort: 5000
           env:
