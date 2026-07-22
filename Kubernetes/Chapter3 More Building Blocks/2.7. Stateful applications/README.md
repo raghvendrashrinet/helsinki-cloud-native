@@ -180,3 +180,10 @@ def get_count():
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
 ```
+---
+#### 2. Dependencies (requirements.txt)
+Make sure psycopg2-binary is included in your project dependencies so Python can communicate with PostgreSQL:
+```
+flask
+psycopg2-binary
+```
