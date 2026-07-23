@@ -130,6 +130,19 @@ kubectl run -it --rm --restart=Never --image postgres psql-debug -- psql postgre
 ```
 If it successfully connects and opens the pingpong_db=> prompt, your database infrastructure is fully ready!
 
+
+
+---
+### If you want all manifest to run at once with single command `apply -f /manifest` 
+### Then add Init-Container in Ping-Deployemnt app ,as this will ensure the postgress pod up and runing before app pods are intialized
+```yaml
+ # --- THIS IS THE CRITICAL PART ---
+      initContainers:
+      - name: wait-for-db
+        image: busybox:1.36
+        command: ['sh', '-c', 'until nc -z postgres-svc 5432; do echo waiting for postgres; sleep 2; done']
+      # ---------------------------------
+```
 ---
 1. Updated Python Logic (app.py)
 Here is how you can update app.py using psycopg2 (or psycopg2-binary). It will:
@@ -227,12 +240,19 @@ Make sure psycopg2-binary is included in your project dependencies so Python can
 ```
 flask
 psycopg2-binary
+requests
 ```
 
 
+
+
+#### Get PostgreSQL pod and login
+`kubectl get pods -l app=postgres ` 
+`kubectl exec -it <pod-name> -- psql -U postgres -d pingpong_db   ` 
 #### List all tables: \dt
 
 * List all databases: `\l`
 * Connect to a specific database: `\c database_name`
 * Query table data: `SELECT * FROM table_name LIMIT 10;`
 * Exit psql: `\q`
+
