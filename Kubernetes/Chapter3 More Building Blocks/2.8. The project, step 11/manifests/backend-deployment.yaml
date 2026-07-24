@@ -23,7 +23,7 @@ spec:
             - "until nc -z postgres-svc 5432; do echo 'Waiting for Postgres...'; sleep 2; done;"
       containers:
         - name: backend
-          image: raghvendrashrinet/todo-backend:v2  # Ensure your real username is set
+          image: raghvendrashrinet/projects:todo-backend2.8  # Ensure your real username is set
           ports:
             - containerPort: 3000
           envFrom:
