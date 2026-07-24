@@ -25,6 +25,13 @@ spec:
           image: <your-docker-hub-username>/todo-backend:v2
           ports:
             - containerPort: 3000
+          envFrom:
+          - configMapRef:
+            name: todo-app-config
           env:
-            - name: DATABASE_URL
-              value: "postgresql://todo_user:todo_password@postgres-svc:5432/todo_db"
+          # Pull password securely from Secret
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgres-secret
+                key: POSTGRES_PASSWORD
