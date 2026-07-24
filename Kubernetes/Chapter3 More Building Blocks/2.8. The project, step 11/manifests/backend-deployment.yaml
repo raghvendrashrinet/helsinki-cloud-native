@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: todo-backend
+  namespace: project
 spec:
   replicas: 1
   selector:
@@ -22,16 +23,11 @@ spec:
             - "until nc -z postgres-svc 5432; do echo 'Waiting for Postgres...'; sleep 2; done;"
       containers:
         - name: backend
-          image: <your-docker-hub-username>/todo-backend:v2
+          image: raghvendrashrinet/todo-backend:v2  # Ensure your real username is set
           ports:
             - containerPort: 3000
           envFrom:
-          - configMapRef:
-            name: todo-app-config
-          env:
-          # Pull password securely from Secret
-          - name: POSTGRES_PASSWORD
-            valueFrom:
-              secretKeyRef:
+            - configMapRef:
+                name: todo-app-config
+            - secretRef:
                 name: postgres-secret
-                key: POSTGRES_PASSWORD
