@@ -8,6 +8,4 @@ data:
   BACKEND_PORT: "2345"
   BACKEND_URL: "http://todo-backend-svc:2345/todos"
   POSTGRES_HOST: "postgres-svc"
-  POSTGRES_DB: "todo_db"
-  POSTGRES_USER: "todo_user"
   POSTGRES_PORT: "5432"
