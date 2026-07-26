@@ -1,0 +1,17 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-backup-job
+  namespace: project
+spec:
+  template:
+    spec:
+      containers:
+      - name: script-runner
+        image: raghvendrashrinet/projects:DBBackupScript 
+        env:
+        - name: URL
+          value: "postgres://todo_user:todo_password@postgres-svc:5432/todo_db"
+          #postgres-svc: Kubernetes DNS automatically resolves this service name to the correct pod IP(s) within the same namespace. You don't need the long .namespace.svc.cluster.local suffix unless your Job is in a different namespace.
+        imagePullPolicy: Always
+      restartPolicy: OnFailure   

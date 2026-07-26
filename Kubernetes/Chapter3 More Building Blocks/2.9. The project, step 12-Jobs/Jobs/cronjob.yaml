@@ -1,0 +1,16 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: wiki-todo-cronjob
+  namespace: project
+spec:
+  schedule: "0 * * * *"  # Every minute for demo/testing
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: wiki-todo-generator
+            image: raghvendrashrinet/wiki-todo-job:v2
+            imagePullPolicy: Always
