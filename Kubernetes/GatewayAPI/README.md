@@ -1,7 +1,7 @@
 ## Kubernetes Gateway API: Knowledge Base & Ingress Comparison
 
 While Ingress focuses on a single, monolithic resource to manage routing, Gateway API breaks down traffic routing into role-oriented, modular resources. It offers better flexibility, native support for advanced traffic splitting, header-based routing, cross-namespace routing, and multi-protocol support (TCP, UDP, gRPC, HTTP).
-
+![Ingress Vs GatewayAPI](GatewayAPI.png)
 ##### 1. Role Separation & Architecture
 **Traditional Ingress Architecture (Monolithic)**
 - In the traditional model, a single Ingress object attempts to handle everything from host definitions to path routing, TLS certs, and controller-specific options.
