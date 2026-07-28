@@ -120,22 +120,65 @@ datasources:
 Install the components in order based on dependency requirements (Metrics/Storage → Log Collector → Dashboard UI):
 ```bash
 # 1. Install Prometheus
-helm upgrade --install prom prometheus-community/prometheus \
-  --namespace monitoring \
-  --values prom-values.yaml
+helm upgrade --install prom prometheus-community/prometheus --namespace monitoring  --values prom-values.yaml
 
 # 2. Install Loki
-helm upgrade --install loki grafana/loki \
-  --namespace monitoring \
-  --values loki-values.yaml
+helm upgrade --install loki grafana/loki --namespace monitoring --values loki-values.yaml
 
 # 3. Install Alloy (k8s-monitoring)
-helm upgrade --install k8smon grafana/k8s-monitoring \
-  --namespace monitoring \
-  --values k8smon-values.yaml
+helm upgrade --install k8smon grafana/k8s-monitoring --namespace monitoring --values k8smon-values.yaml
 
 # 4. Install Grafana
-helm upgrade --install grafana grafana/grafana \
-  --namespace monitoring \
-  --values grafana-values.yaml
+helm upgrade --install grafana grafana/grafana --namespace monitoring --values grafana-values.yaml
+```
+
+### Verification & Access
+- Check Pod Status
+Ensure all releases are deployed and all pods are running:
+
+```Bash
+helm list --namespace monitoring
+kubectl get pods -n monitoring
+```
+
+### Accessing Grafana Dashboard
+Port-forward the Grafana service to access the UI locally:
+```
+kubectl port-forward --namespace monitoring svc/grafana 3000:80
+```
+### Port-forward the Prometheus server service:
+```
+kubectl port-forward --namespace monitoring svc/prom-prometheus-server 9090:80
+```
+
+### Querying Data in Grafana
+Go to Explore mode in Grafana to run queries:
+
+1. Prometheus (PromQL Examples)
+- Total Pod Count across the cluster:
+```
+count(kube_pod_info)
+```
+- Breakdown of pods by namespace:
+```
+count by (namespace) (kube_pod_info)
+```
+2. Loki (LogQL Examples)
+- View logs for pods in the default namespace:
+```
+{namespace="default"}
+```
+- Filter for specific error logs:
+```
+{namespace="default"} |= "error"
+```
+
+### Cleanup
+To uninstall all releases and remove the setup:
+```
+helm delete prom -n monitoring
+helm delete loki -n monitoring
+helm delete k8smon -n monitoring
+helm delete grafana -n monitoring
+kubectl delete namespace monitoring
 ```
