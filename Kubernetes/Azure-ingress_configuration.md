@@ -10,18 +10,13 @@
 
   ```bash
   # Replace myResourceGroup and myAKSCluster with your names
-  NODE_RG=$(az aks show -g myResourceGroup -n myAKSCluster --query nodeResourceGroup -o tsv)
+  $NODE_RG=$(az aks show -g myResourceGroup -n myAKSCluster --query nodeResourceGroup -o tsv)
   ```
 3. - Install the Ingress Controller via Helm
 Run the helm install command. The --set parameters explicitly attach Azure cloud-specific annotations so the cloud provider routes traffic correctly
 
   ```bash
-  helm install aks-ingress ingress-nginx/ingress-nginx \
-    --create-namespace \
-    --namespace ingress-basic \
-    --set controller.replicaCount=2 \
-    --set controller.service.externalTrafficPolicy=Local \
-    --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-resource-group"="$NODE_RG"
+  helm install aks-ingress ingress-nginx/ingress-nginx --create-namespace --namespace ingress-basic --set controller.replicaCount=2 --set  controller.service.externalTrafficPolicy=Local --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-resource-group"="$NODE_RG"
     ```
 >[!NOTE]
 >--set controller.replicaCount=2: Deploys two replicas for high availability.  
