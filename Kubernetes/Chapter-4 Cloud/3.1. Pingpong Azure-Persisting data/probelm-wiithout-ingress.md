@@ -36,8 +36,8 @@ $RESOURCE_GROUP = "myResourceGroup"
 $AKS_NAME = "myAKSCluster"
 $LOCATION = "eastus"
 
-# Create resource group
-az group create --name $RESOURCE_GROUP --location $LOCATION    -- Powershell
+# Create resource group ,  azure cli command
+az group create --name $RESOURCE_GROUP --location $LOCATION    
 
 # Create AKS cluster
 az aks create --resource-group $RESOURCE_GROUP --name $AKS_NAME --node-count 1 --node-vm-size Standard_B2s --generate-ssh-keys
