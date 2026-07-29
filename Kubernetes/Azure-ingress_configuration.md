@@ -46,6 +46,7 @@ Run the helm install command. The --set parameters explicitly attach Azure cloud
     kubectl get svc -n app-routing-system
    ```
    > Take note of the` EXTERNAL-IP `generated for the nginx service, as this will route external traffic into your cluster.
+
 3. - Deploy an Application and Ingress Route
      To test the setup, save the following configuration as app-ingress.yaml. This file creates a sample web application, a target service, and the Ingress routing rule.yamlapiVersion: apps/v1
 ```yaml
