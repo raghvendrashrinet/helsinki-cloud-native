@@ -17,12 +17,13 @@ Run the helm install command. The --set parameters explicitly attach Azure cloud
 
   ```bash
   helm install aks-ingress ingress-nginx/ingress-nginx --create-namespace --namespace ingress-basic --set controller.replicaCount=2 --set  controller.service.externalTrafficPolicy=Local --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-resource-group"="$NODE_RG"
-    ```
+  ```
 >[!NOTE]
 >--set controller.replicaCount=2: Deploys two replicas for high availability.  
 >--set controller.service.externalTrafficPolicy=Local: Preserves client source IPs.  
 >--set ...azure-load-balancer-resource-group: Directs Azure to create the public IP in the correct managed node resource group.
- 4. - Verify the Public IP Assignment
+
+4. - Verify the Public IP Assignment
   ```
   kubectl get service -w aks-ingress-ingress-nginx-controller --namespace ingress-basic
   ```
@@ -31,6 +32,7 @@ Run the helm install command. The --set parameters explicitly attach Azure cloud
 ---
 ### Using Azure Method
 ##### enable the Application Routing Add-on for Azure Kubernetes Service (AKS).This add-on automates the deployment of a fully managed NGINX Ingress Controller and integrates it with Azure Private DNS and Azure Key Vault for SSL/TLS management
+
 1. - Enable Application Routing on AKSRun the following Azure CLI command to enable the managed NGINX Ingress Controller on your existing AKS cluster.
   ```
   az aks approuting enable \
@@ -38,17 +40,18 @@ Run the helm install command. The --set parameters explicitly attach Azure cloud
   --name myAKSCluster
   ```
 2. - Verify the Ingress Controller Deployment
-   ```
+  ```
    # Check the deployment pods
     kubectl get pods -n app-routing-system
 
    # Find your public External IP address
     kubectl get svc -n app-routing-system
-   ```
+  ```
    > Take note of the` EXTERNAL-IP `generated for the nginx service, as this will route external traffic into your cluster.
 
 3. - Deploy an Application and Ingress Route
      To test the setup, save the following configuration as app-ingress.yaml. This file creates a sample web application, a target service, and the Ingress routing rule.yamlapiVersion: apps/v1
+
 ```yaml
 kind: Deployment
 metadata:
