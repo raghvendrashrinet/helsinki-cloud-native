@@ -89,4 +89,35 @@ Key Points:
 - Each Pod gets its own **dedicated RWO PVC** bound to that name.
 - When Pod db-1 restarts, it always reattaches to PVC db-data-1.
 - Ensures isolated persistent state and durability.
+---
 
+```
+StatefulSet with Headless Service
+-------------------------------------------------
+   +---------+        +---------+        +---------+
+   | Pod db-0|        | Pod db-1|        | Pod db-2|
+   +---------+        +---------+        +---------+
+        |                  |                  |
+   +----------------+  +----------------+  +----------------+
+   | PVC db-data-0  |  | PVC db-data-1  |  | PVC db-data-2  |
+   | (RWO Volume)   |  | (RWO Volume)   |  | (RWO Volume)   |
+   +----------------+  +----------------+  +----------------+
+        |                  |                  |
+        +------------------+------------------+
+                           |
+                  +-------------------+
+                  | Headless Service  |
+                  | (ClusterIP=None)  |
+                  +-------------------+
+                           |
+   DNS resolves to each Pod directly:
+   db-0.db-service.namespace.svc.cluster.local
+   db-1.db-service.namespace.svc.cluster.local
+   db-2.db-service.namespace.svc.cluster.local
+```
+**Unique Names:** Pods in a StatefulSet are ordered and named predictably (db-0, db-1, db-2).
+
+**RWO PVCs:** Each Pod gets its own dedicated disk (db-data-0, db-data-1, db-data-2).
+
+**Headless Service:** Created with clusterIP: None. Instead of load-balancing, it exposes DNS records for each Pod.
+  - Clients can connect directly to db-0, db-1, db-2 using DNS
