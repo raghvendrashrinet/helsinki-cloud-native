@@ -32,13 +32,13 @@ spec:
 
   ### Check the app
   ```
-    * port forward pod
-    kubectl port-forward dep-loggen-7cfbb6658d-2ch6d 8080:8000
-    * port deployment
-    kubectl port-forward deployment/dep-loggen 8080:8000
+    # Verify the Azure LoadBalancer service
+    kubectl get svc dep-loggen
   ```
-  ### Browse   
-  ` http://localhost:8080/`
+  ### Browse via Azure LoadBalancer
+  - Access the app using the external IP assigned by Azure:
+    `http://<EXTERNAL-IP>/`
+  - This project uses `type: LoadBalancer` in `svc.yaml`, so Azure will provision the LB and expose the service.
 
 #### Troubleshoot
 - Check log in the local 
@@ -74,3 +74,4 @@ containers:
       mountPath: /app/log.txt  # <-- Where your app code looks for it
       subPath: log.txt         # <-- Points directly to the file init created
 ```
+---

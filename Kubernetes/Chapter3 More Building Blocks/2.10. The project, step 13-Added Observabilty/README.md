@@ -62,3 +62,8 @@ Container runtime: Docker/Kubernetes writes those output streams to /var/log/pod
 Alloy: Tails the log file from the node filesystem and pushes it to Loki.
 
 Grafana: You query Loki using {namespace="default"} |= "REJECTED" to view the exact blocked request log.
+
+Here is an example of the Loki log view:
+
+![Loki log view](Loki-snap.png)
+
