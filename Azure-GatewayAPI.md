@@ -2,7 +2,7 @@
 ![Gateway API Architecture](image.png)
 ---
 ### Azure Gateway API Implementation via Application Gateway for Containers (AGC)
-n Azure Kubernetes Service (AKS), the standard Kubernetes Gateway API is primarily implemented through Application Gateway for Containers (AGC).
+In Azure Kubernetes Service (AKS), the standard Kubernetes Gateway API is primarily implemented through Application Gateway for Containers (AGC).
 
 #### High-Level Architecture
 The architecture consists of two main environments: the `Kubernetes Cluster Control Plane` and the `Azure-Managed Infrastructure`.
