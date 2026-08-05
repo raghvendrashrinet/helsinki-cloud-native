@@ -137,6 +137,13 @@ In this approach, the ALB Controller dynamically provisions the AGC parent resou
 +------------------------------------------------------------------+
 ```
 
+Variable
+```
+$RESOURCE_GROUP = "rg1"
+$AKS_NAME = "myAKSCluster"
+$LOCATION = "eastus"
+```
+
 ##### Step 1: Register Azure Resource Providers & Features
 ```
 az provider register --namespace Microsoft.ServiceNetworking
@@ -144,22 +151,52 @@ az provider register --namespace Microsoft.ContainerService
 ```
 ##### Step 2: Install the ALB Controller via Helm
 ```
-# Register ALB Controller Helm repository
-helm repo add alb-controller https://mcr.microsoft.com/azure-alb/helm/alb-controller
-helm repo update
 
 # Install ALB Controller
-helm install alb-controller alb-controller/alb-controller \
-  --namespace kube-system \
-  --set clusterName=<YOUR_AKS_CLUSTER_NAME> \
-  --set albController.namespace=kube-system
+# 1. Define your deployment variables
+$HELM_NAMESPACE="azure-alb-system"
+$CONTROLLER_NAMESPACE="azure-alb-system"
+$VERSION="1.11.3"  # Replace with your desired chart version
+
+## Create Identity First
+az identity create -g $RESOURCE_GROUP -n azure-alb-identity
+
+
+# 2. Grab your managed identity Client ID (Required by the ALB controller)
+$ALB_CLIENT_ID=$(az identity show -g $RESOURCE_GROUP -n azure-alb-identity --query clientId -o tsv)
+
+# 3. Install directly using the oci:// protocol
+helm install alb-controller oci://mcr.microsoft.com/application-lb/charts/alb-controller --namespace $HELM_NAMESPACE --create-namespace --version $VERSION --set albController.namespace=$CONTROLLER_NAMESPACE --set albController.podIdentity.clientID=$ALB_CLIENT_ID
+
 ```
 
-##### Step 3: Create a Delegated Subnet for AGC
-AGC requires a dedicated subnet delegated to Microsoft.ServiceNetworking/trafficControllers.
+##### Step 3: Create a Delegated Subnet for AGC / Or use the existingVNEt in the AKS which auto created when you created the AKS Cluster (MC_)
+-Use Existing 
 ```
-az network vnet subnet create \
-  --resource-group <YOUR_RESOURCE_GROUP> \
+$MC_NODE_RG=$(az aks show -g $RESOURCE_GROUP -n $AKS_NAME --query nodeResourceGroup -o tsv)
+$VNET_NAME=$(az network vnet list -g $MC_NODE_RG --query "[0].name" -o tsv)
+
+az network vnet subnet create `
+  --resource-group $MC_NODE_RG `
+  --vnet-name $VNET_NAME `
+  --name agc-subnet `
+  --address-prefixes 10.225.0.0/24 `
+  --delegations Microsoft.ServiceNetworking/trafficControllers
+
+
+- If you want to created new AGC VNET for the  dedicated subnet delegated to Microsoft.ServiceNetworking/trafficControllers.
+1. First Create vnet which will AGC
+```
+az network vnet create \
+  --resource-group $RESOURCE_GROUP \
+  --name <YOUR_VNET_NAME> \
+  --address-prefixes 10.224.0.0/16 \
+  --location $LOCATION 
+```
+
+```
+az network vnet subnet create 
+  --resource-group $RESOURCE_GROUP
   --vnet-name <YOUR_VNET_NAME> \
   --name agc-subnet \
   --address-prefixes 10.224.0.0/24 \
@@ -169,10 +206,15 @@ az network vnet subnet create \
 The ALB Controller needs AppGateway-Identity Reader on the Resource Group and Network Contributor on the delegated subnet.
 ```
 # Get ALB Controller Identity ID
-ALB_IDENTITY_ID=$(az aks show --resource-group <YOUR_RESOURCE_GROUP> --name <YOUR_AKS_CLUSTER_NAME> --query "addonProfiles.albController.identity.clientId" -o tsv)
+$ALB_IDENTITY_ID=$(az identity show -g $RESOURCE_GROUP -n azure-alb-identity --query clientId -o tsv)
 
 # Assign Network Contributor on Subnet
-SUBNET_ID=$(az network vnet subnet show --resource-group <YOUR_RESOURCE_GROUP> --vnet-name <YOUR_VNET_NAME> --name agc-subnet --query id -o tsv)
+$SUBNET_ID = az network vnet subnet show `
+  --resource-group $MC_NODE_RG `
+  --vnet-name $VNET_NAME `
+  --name agc-subnet `
+  --query id -o tsv
+  
 az role assignment create --assignee $ALB_IDENTITY_ID --role "Network Contributor" --scope $SUBNET_ID
 ```
 ##### Step 5: Apply Gateway API Manifests
@@ -193,17 +235,17 @@ metadata:
   name: agc-gateway
   namespace: default
   annotations:
-    alb.networking.azure.io/alb-namespace: <YOUR_RESOURCE_GROUP>
-    alb.networking.azure.io/alb-subnet-id: <SUBNET_ID>
+    alb.networking.azure.io/alb-namespace: $RESOURCE_GROUP
+    alb.networking.azure.io/alb-subnet-id: $SUBNET_ID
 spec:
   gatewayClassName: azure-alb-external
   listeners:
-  - name: http
-    port: 80
-    protocol: HTTP
-    allowedRoutes:
-      namespaces:
-        from: Same
+    - name: http
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: Same
 ```
 3. HTTPRoute: Routes incoming HTTP traffic to your backend services.
 ```yaml
