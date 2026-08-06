@@ -1,0 +1,16 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: agc-gateway
+  namespace: default
+  annotations:
+    alb.networking.azure.io/alb-frontend-id: /subscriptions/94eb4090-3469-4a04-b56d-0f5af07bdf41/resourceGroups/MC_rg1_myAKSCluster_eastus/providers/Microsoft.ServiceNetworking/trafficControllers/my-agc/frontends/my-frontend
+spec:
+  gatewayClassName: azure-alb-external
+  listeners:
+  - name: http
+    port: 80
+    protocol: HTTP
+    allowedRoutes:
+      namespaces:
+        from: Same
