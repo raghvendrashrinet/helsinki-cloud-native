@@ -3,7 +3,7 @@
 
 | Bash | PowerShell | CMD |
 |------|------------|-----|
-| RESOURCE_GROUP="myResourceGroup"<br>AKS_NAME="myAKSCluster"<br>LOCATION="eastus" | $RESOURCE_GROUP = "myResourceGroup"<br>$AKS_NAME = "myAKSCluster"<br>$LOCATION = "eastus" | set RESOURCE_GROUP=myResourceGroup<br>set AKS_NAME=myAKSCluster<br>set LOCATION=eastus |
+| RESOURCE_GROUP="rg1"<br>AKS_NAME="myAKSCluster"<br>LOCATION="eastus" | $RESOURCE_GROUP = "myResourceGroup"<br>$AKS_NAME = "myAKSCluster"<br>$LOCATION = "eastus" | set RESOURCE_GROUP=myResourceGroup<br>set AKS_NAME=myAKSCluster<br>set LOCATION=eastus |
 
 ```
 # Create resource group
