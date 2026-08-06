@@ -4,6 +4,19 @@
 ### Azure Gateway API Implementation via Application Gateway for Containers (AGC)
 In Azure Kubernetes Service (AKS), the standard Kubernetes Gateway API is primarily implemented through Application Gateway for Containers (AGC).
 
+#### The ALB Controller 
+is responsible for translating Gateway API and Ingress API configuration within Kubernetes to load balancing rules within Application Gateway for Containers.  
+
+[MS-Azure ALB Setup-Link](https://learn.microsoft.com/en-us/azure/application-gateway/for-containers/quickstart-deploy-application-gateway-for-containers-alb-controller-addon?tabs=azure-cli%2Cazure-cli2)
+
+<img width="660" height="517" alt="image" src="https://github.com/user-attachments/assets/27d9d06a-ebf4-4e7d-8adb-bc8988305e20" />  
+
+#### AGC (Application Gateway for Containers) 
+is the data plane / Azure resource. It is the actual cloud load balancer resource managed in Azure that processes incoming network traffic (Layer 7 routing, SSL offloading, traffic splitting) and routes it directly to pods in your Azure Kubernetes Service (AKS) cluster.
+
+#### ALB Controller is the control plane / Kubernetes operator. 
+It is an in-cluster controller (running as pods inside your AKS cluster) that acts as the bridge between Kubernetes and Azure. It watches your Kubernetes custom resources (such as ApplicationLoadBalancer, Gateway, or Ingress) and automatically translates those definitions into Azure API configurations on the AGC instance.
+
 #### High-Level Architecture
 The architecture consists of two main environments: the `Kubernetes Cluster Control Plane` and the `Azure-Managed Infrastructure`.
 ```
@@ -142,82 +155,46 @@ Variable
 $RESOURCE_GROUP = "rg1"
 $AKS_NAME = "myAKSCluster"
 $LOCATION = "eastus"
+$VM_SIZE='Standard_B2s'
 ```
 
 ##### Step 1: Register Azure Resource Providers & Features
 ```
-az provider register --namespace Microsoft.ServiceNetworking
+# Register required resource providers on Azure.
 az provider register --namespace Microsoft.ContainerService
-```
-##### Step 2: Install the ALB Controller via Helm
-```
+az provider register --namespace Microsoft.Network
+az provider register --namespace Microsoft.NetworkFunction
+az provider register --namespace Microsoft.ServiceNetworking
 
-# Install ALB Controller
-# 1. Define your deployment variables
-$HELM_NAMESPACE="azure-alb-system"
-$CONTROLLER_NAMESPACE="azure-alb-system"
-$VERSION="1.11.3"  # Replace with your desired chart version
-
-## Create Identity First
-az identity create -g $RESOURCE_GROUP -n azure-alb-identity
-
-
-# 2. Grab your managed identity Client ID (Required by the ALB controller)
-$ALB_CLIENT_ID=$(az identity show -g $RESOURCE_GROUP -n azure-alb-identity --query clientId -o tsv)
-
-# 3. Install directly using the oci:// protocol
-helm install alb-controller oci://mcr.microsoft.com/application-lb/charts/alb-controller --namespace $HELM_NAMESPACE --create-namespace --version $VERSION --set albController.namespace=$CONTROLLER_NAMESPACE --set albController.podIdentity.clientID=$ALB_CLIENT_ID
+# Install Azure CLI extensions.
+az extension add --name alb
+az extension add --name aks-preview 
 
 ```
-
-##### Step 3: Create a Delegated Subnet for AGC / Or use the existingVNEt in the AKS which auto created when you created the AKS Cluster (MC_)
--Use Existing 
+2. Register add-on feature
 ```
-$MC_NODE_RG=$(az aks show -g $RESOURCE_GROUP -n $AKS_NAME --query nodeResourceGroup -o tsv)
-$VNET_NAME=$(az network vnet list -g $MC_NODE_RG --query "[0].name" -o tsv)
-
-az network vnet subnet create `
-  --resource-group $MC_NODE_RG `
-  --vnet-name $VNET_NAME `
-  --name agc-subnet `
-  --address-prefixes 10.225.0.0/24 `
-  --delegations Microsoft.ServiceNetworking/trafficControllers
-
-
-- If you want to created new AGC VNET for the  dedicated subnet delegated to Microsoft.ServiceNetworking/trafficControllers.
-1. First Create vnet which will AGC
-```
-az network vnet create \
-  --resource-group $RESOURCE_GROUP \
-  --name <YOUR_VNET_NAME> \
-  --address-prefixes 10.224.0.0/16 \
-  --location $LOCATION 
+# Register required preview features
+az feature register --namespace "Microsoft.ContainerService" --name "ManagedGatewayAPIPreview"
+az feature register --namespace "Microsoft.ContainerService" --name "ApplicationLoadBalancerPreview"
 ```
 
+### 2. Setup an AKS cluster with the AKS add-on
 ```
-az network vnet subnet create 
-  --resource-group $RESOURCE_GROUP
-  --vnet-name <YOUR_VNET_NAME> \
-  --name agc-subnet \
-  --address-prefixes 10.224.0.0/24 \
-  --delegations Microsoft.ServiceNetworking/trafficControllers
-```
-##### Step 4: Grant Managed Identity Permissions
-The ALB Controller needs AppGateway-Identity Reader on the Resource Group and Network Contributor on the delegated subnet.
-```
-# Get ALB Controller Identity ID
-$ALB_IDENTITY_ID=$(az identity show -g $RESOURCE_GROUP -n azure-alb-identity --query clientId -o tsv)
 
-# Assign Network Contributor on Subnet
-$SUBNET_ID = az network vnet subnet show `
-  --resource-group $MC_NODE_RG `
-  --vnet-name $VNET_NAME `
-  --name agc-subnet `
-  --query id -o tsv
-  
-az role assignment create --assignee $ALB_IDENTITY_ID --role "Network Contributor" --scope $SUBNET_ID
+az group create --name $RESOURCE_GROUP --location $LOCATION
+az aks create --resource-group $RESOURCE_GROUP --name $AKS_NAME --location $LOCATION --node-vm-size $VM_SIZE --network-plugin azure --enable-oidc-issuer --enable-workload-identity --enable-gateway-api --enable-application-load-balancer --generate-ssh-key
+
+az aks get-credentials --resource-group $RESOURCE_GROUP --name $AKS_NAME
 ```
-##### Step 5: Apply Gateway API Manifests
+
+- Check ALB
+  ```
+  kubectl get pods -n kube-system | grep alb-controller
+  ```
+
+---
+
+##### Step 3: Apply Gateway API Manifests
 1. GatewayClass: Tells Kubernetes to use Azure AGC.
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -287,6 +264,42 @@ In enterprise environments with strict RBAC, infrastructure teams pre-provision 
 |  3. App Dev deploys HTTPRoute attached to the pre-created Gateway |
 +------------------------------------------------------------------+
 ```
+###  Diagram for 1-to-1 ASCII mapping 
+showing how the Kubernetes Gateway API resources correspond directly to the pre-created Azure Application Gateway for Containers (AGC) components in the BYO (Bring Your Own) Infrastructure
+
+```
++------------------------------------+              +-------------------------------------+
+| KUBERNETES CONTROL PLANE           |              | AZURE INFRASTRUCTURE (Pre-Created)  |
++------------------------------------+              +-------------------------------------+
+|                                    |              |                                     |
+|  [ GatewayClass ]                  |              |  [ Azure ALB Controller ]           |
+|  spec.controllerName:              | -----------> |  (Watches K8s resources & syncs     |
+|  alb.networking.azure.io/...       |  (Binds To)  |   config via ARM API updates)       |
+|                                    |              |                                     |
+|                 |                  |              |                  |                  |
+|                 | (References)     |              |                  | (Contains)       |
+|                 v                  |              |                  v                  |
+|                                    |              |                                     |
+|  [ Gateway ]                       |              |  [ AGC Parent Resource ]            |
+|  kind: Gateway                     |              |  (Microsoft.ServiceNetworking/      |
+|  listeners: [ HTTP/80 ]            |              |   trafficControllers)               |
+|                 |                  |              |                  |                  |
+|                 |                  |              |                  | (Contains)       |
+|                 |                  |              |                  v                  |
+|                 |                  |              |                                     |
+|                 | (alb-frontend-id)|              |  [ Frontend Resource ]              |
+|                 +-------------------------------->|  (Assigned Public/Private IP)       |
+|                                    | (Attaches)   |                  |                  |
+|                                    |              |                  | (Associated)     |
+|                                    |              |                  v                  |
+|  [ HTTPRoute ]                     |              |                                     |
+|  spec.parentRefs: [ Gateway ]      |              |  [ Subnet Association ]             |
+|  spec.rules: [ / -> Service ]      | -----------> |  (Routes traffic directly to        |
+|                                    | (Directs)    |   Pod IPs via Delegated Subnet)     |
+|                                    |              |                                     |
++------------------------------------+              +-------------------------------------+
+```
+
 Step 1: Pre-provision AGC Infrastructure via Azure CLI
 ```Bash
 # 1. Create Application Gateway for Containers Resource
