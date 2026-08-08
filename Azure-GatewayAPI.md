@@ -55,12 +55,12 @@ The architecture consists of two main environments: the `Kubernetes Cluster Cont
 
 
 ##### Core Components
-1. Control Plane: ALB Controller
+1. ***Control Plane: ALB Controller***
   - ALB Controller runs inside your AKS cluster.   
   - It continuously monitors Kubernetes resources like GatewayClass, Gateway, and HTTPRoute.   
   - When changes occur, it translates these Kubernetes definitions into Azure Resource Manager (ARM) API calls to program the Azure-managed AGC Data Plane.
 
-2. Azure-Managed Data Plane: AGC Resources
+2. ***Azure-Managed Data Plane: AGC Resources***
    - Application Gateway for Containers Resource: The parent Azure resource holding the load-balancing configuration.
    - Frontend: Represents the entry point for client traffic (assigned a public IP address or internal IP).
    - Association: The link between AGC and your Azure Virtual Network (VNet) via a dedicated delegated subnet.
