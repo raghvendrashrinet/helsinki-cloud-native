@@ -5,7 +5,7 @@
 In Azure Kubernetes Service (AKS), the standard Kubernetes Gateway API is primarily implemented through Application Gateway for Containers (AGC).
 
 #### The ALB Controller 
-is responsible for translating Gateway API and Ingress API configuration within Kubernetes to load balancing rules within Application Gateway for Containers.  
+It's responsible for translating Gateway API and Ingress API configuration within Kubernetes to load balancing rules within Application Gateway for Containers.  
 
 [MS-Azure ALB Setup-Link](https://learn.microsoft.com/en-us/azure/application-gateway/for-containers/quickstart-deploy-application-gateway-for-containers-alb-controller-addon?tabs=azure-cli%2Cazure-cli2)
 
