@@ -12,7 +12,7 @@ It's responsible for translating Gateway API and Ingress API configuration withi
 <img width="660" height="517" alt="image" src="https://github.com/user-attachments/assets/27d9d06a-ebf4-4e7d-8adb-bc8988305e20" />  
 
 #### AGC (Application Gateway for Containers) 
-is the data plane / Azure resource. It is the actual cloud load balancer resource managed in Azure that processes incoming network traffic (Layer 7 routing, SSL offloading, traffic splitting) and routes it directly to pods in your Azure Kubernetes Service (AKS) cluster.
+Sits outside the cluster as a fully managed Azure cloud resource. It receives the configuration updates from the ALB Controller and performs the actual network heavy lifting—such as Layer 7 routing, SSL offloading, traffic splitting, and routing directly to your pod IPs via a delegated subnet.
 
 #### ALB Controller is the control plane / Kubernetes operator. 
 It is an in-cluster controller (running as pods inside your AKS cluster) that acts as the bridge between Kubernetes and Azure. It watches your Kubernetes custom resources (such as ApplicationLoadBalancer, Gateway, or Ingress) and automatically translates those definitions into Azure API configurations on the AGC instance.
