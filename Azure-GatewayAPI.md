@@ -282,24 +282,28 @@ az network alb association create `
 ##### Step 4. Configure Workload Identity / Managed Identity
 The ALB Controller inside your AKS cluster needs permissions to manage the AGC resource in Azure.
 ```Powershell
-# 1. Get the identity client ID created for the ALB Controller
-$ALB_MODE = "managed" # or "byo" depending on your setup
+# 1. Capture subscription and resource group
+$subscriptionId = (az account show --query id -o tsv)
+$resourceGroup = "<your-resource-group>"
+
+# 2. Get the ALB Controller identity client ID
 $IDENTITY_CLIENT_ID = (az identity show `
   --resource-group $MC_RESOURCE_GROUP `
   --name "applicationloadbalancer-myakscluster" `
   --query "clientId" -o tsv)
 
-# 2. Assign App Gateway for Containers Configuration Manager role to the identity
+# 3. Assign AppGw for Containers Configuration Manager role
 az role assignment create `
   --assignee $IDENTITY_CLIENT_ID `
-  --role "AppGateway for Containers Configuration Manager" `
-  --scope "/subscriptions/$(az account show --query id -o tsv)/resourceGroups/$RESOURCE_GROUP"
+  --role "AppGw for Containers Configuration Manager" `
+  --scope "/subscriptions/$subscriptionId/resourceGroups/$resourceGroup"
 
-# 3. Assign Network Contributor role on the delegated subnet
+# 4. Assign Network Contributor role on the delegated subnet
 az role assignment create `
   --assignee $IDENTITY_CLIENT_ID `
   --role "Network Contributor" `
   --scope $SUBNET_ID
+
 ```
 
 ##### Step 5: Apply Gateway API Manifests
