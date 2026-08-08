@@ -219,8 +219,40 @@ az network vnet subnet create `
 >just keep -> Delegation: Microsoft.ServiceNetworking/trafficControllers 
 
 - **Step 2: Create the Azure AGC Resource (Traffic Controller)**
+```
+┌─────────────────────────┐
+│     PUBLIC INTERNET     │
+└────────────┬────────────┘
+             │ 
+             │ 1. Incoming Client Request
+             ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                        AZURE VIRTUAL NETWORK (VNet)                     │
+│                                                                        │
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │                 Delegated Subnet (alb-subnet)                    │  │
+│  │  Delegation: Microsoft.ServiceNetworking/trafficControllers      │  │
+│  │                                                                  │  │
+│  │    [ Frontend (Public IP Entry Point) ]                          │  │
+│  │                   │                                              │  │
+│  │                   ▼                                              │  │
+│  │    [ AGC Data Plane Engine - "my-agc" ]                          │  │
+│  └───────────────────┬──────────────────────────────────────────────┘  │
+│                      │                                                 │
+│                      │ 2. Direct Layer 7 Pod Routing                   │
+│                      ▼                                                 │
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │                        AKS Cluster Subnet                        │  │
+│  │                                                                  │  │
+│  │          [ Pod 1 IP ]                 [ Pod 2 IP ]               │  │
+│  └──────────────────────────────────────────────────────────────────┘  │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
    Provision the top-level AGC resource in Azure:
-  ``
+```
+$MC_RESOURCE_GROUP = (az group list --query "[?starts_with(name, 'MC_')].name" -o tsv)
+$VNET_NAME = (az network vnet list --resource-group $MC_RESOURCE_GROUP --query "[0].name" -o tsv)
   # Create the Application Gateway for Containers resource
 az network alb create `
   --resource-group $RESOURCE_GROUP `
@@ -233,7 +265,11 @@ az network alb frontend create `
   --name "my-frontend"
 
 # Get the dedicated Subnet ID
-$SUBNET_ID = (az network vnet subnet show --resource-group $RESOURCE_GROUP --vnet-name $VNET_NAME --name "alb-subnet" --query "id" -o tsv)
+$SUBNET_ID = (az network vnet subnet show `
+  --resource-group $MC_RESOURCE_GROUP `
+  --vnet-name $VNET_NAME `
+  --name "alb-subnet" `
+  --query "id" -o tsv)
 
 # Associate the AGC with the delegated subnet
 az network alb association create `
@@ -242,7 +278,31 @@ az network alb association create `
   --name "my-association" `
   --subnet $SUBNET_ID
   ```
-##### Step 4: Apply Gateway API Manifests
+
+##### Step 4. Configure Workload Identity / Managed Identity
+The ALB Controller inside your AKS cluster needs permissions to manage the AGC resource in Azure.
+```Powershell
+# 1. Get the identity client ID created for the ALB Controller
+$ALB_MODE = "managed" # or "byo" depending on your setup
+$IDENTITY_CLIENT_ID = (az identity show `
+  --resource-group $MC_RESOURCE_GROUP `
+  --name "applicationloadbalancer-myakscluster" `
+  --query "clientId" -o tsv)
+
+# 2. Assign App Gateway for Containers Configuration Manager role to the identity
+az role assignment create `
+  --assignee $IDENTITY_CLIENT_ID `
+  --role "AppGateway for Containers Configuration Manager" `
+  --scope "/subscriptions/$(az account show --query id -o tsv)/resourceGroups/$RESOURCE_GROUP"
+
+# 3. Assign Network Contributor role on the delegated subnet
+az role assignment create `
+  --assignee $IDENTITY_CLIENT_ID `
+  --role "Network Contributor" `
+  --scope $SUBNET_ID
+```
+
+##### Step 5: Apply Gateway API Manifests
 1. GatewayClass: Tells Kubernetes to use Azure AGC.
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
