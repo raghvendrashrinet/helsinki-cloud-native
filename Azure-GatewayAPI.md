@@ -193,8 +193,56 @@ az aks get-credentials --resource-group $RESOURCE_GROUP --name $AKS_NAME
   ```
 
 ---
+##### Step 3: Connecting ALB to AGC
+Now that the ALB Controller is running inside your cluster, the next phase is to connect the in-cluster controller to the Azure-managed Application Gateway for Containers (AGC) data plane infrastructure
 
-##### Step 3: Apply Gateway API Manifests
+- **Step 1: Create a Subnet Delegated to AGC:**
+     AGC requires its own dedicated subnet inside your Virtual Network (VNet).
+```PowerShell
+
+# Get MC Resource group
+$MC_RESOURCE_GROUP = az group list --query "[?starts_with(name, 'MC_')].name" -o tsv
+
+  # Get your AKS VNet name and Resource Group
+$VNET_NAME = az network vnet list --resource-group $MC_RESOURCE_GROUP --query "[0].name" -o tsv
+
+# Create a dedicated subnet for AGC with delegation
+az network vnet subnet create `
+  --resource-group $MC_RESOURCE_GROUP `
+  --vnet-name $VNET_NAME `
+  --name "alb-subnet" `
+  --address-prefixes "10.225.0.0/24" `
+  --delegations "Microsoft.ServiceNetworking/trafficControllers"
+```
+>[!Note]
+>There was error from CLI, So Subnet created from GUI
+>just keep -> Delegation: Microsoft.ServiceNetworking/trafficControllers 
+
+- **Step 2: Create the Azure AGC Resource (Traffic Controller)**
+   Provision the top-level AGC resource in Azure:
+  ``
+  # Create the Application Gateway for Containers resource
+az network alb create `
+  --resource-group $RESOURCE_GROUP `
+  --name "my-agc"
+
+# Create a Frontend (the public IP entry point)
+az network alb frontend create `
+  --resource-group $RESOURCE_GROUP `
+  --alb-name "my-agc" `
+  --name "my-frontend"
+
+# Get the dedicated Subnet ID
+$SUBNET_ID = (az network vnet subnet show --resource-group $RESOURCE_GROUP --vnet-name $VNET_NAME --name "alb-subnet" --query "id" -o tsv)
+
+# Associate the AGC with the delegated subnet
+az network alb association create `
+  --resource-group $RESOURCE_GROUP `
+  --alb-name "my-agc" `
+  --name "my-association" `
+  --subnet $SUBNET_ID
+  ```
+##### Step 4: Apply Gateway API Manifests
 1. GatewayClass: Tells Kubernetes to use Azure AGC.
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
