@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'C:\Users\rag\Desktop\helsinki-local-repo\helsinki-cloud-native\Kubernetes\Chapter-4 Cloud\GitHub Actions-Pipeline**' # Triggers ONLY when code in project-a changes
+      - 'Kubernetes/Chapter-4 Cloud/GitHub Actions-Pipeline**' # Triggers ONLY when code in project-a changes
 
 permissions:
   id-token: write
