@@ -35,7 +35,9 @@ jobs:
         - name: Build and push
           uses: docker/build-push-action@v5
           with:
-           # context: .
+            # by default workflow looks for Dockerfile in root directory ,but to point fike in my pjt folder 
+            context: "./Kubernetes/Chapter-4 Cloud/GitHub Actions-Pipeline"
+            file: "./Kubernetes/Chapter-4 Cloud/GitHub Actions-Pipeline/Dockerfile"
             push: true
             tags: | 
                  ${{vars.DOCKER_USERNAME}}/projects:${{github.sha}}
