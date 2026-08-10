@@ -45,6 +45,7 @@ jobs:
 ## Next Login into azure portal ,give necessary access permission
 
    deploy:
+    needs: [build]
     runs-on: ubuntu-latest
     permissions:
       id-token: write   # Required for OIDC
@@ -67,7 +68,7 @@ jobs:
     - name: Update image tag
       run: |
         cd "Kubernetes/Chapter-4 Cloud/GitHub Actions-Pipeline"
-        ustomize edit set image PROJECT/IMAGE=${{ vars.DOCKER_USERNAME }}/projects:${{ github.sha }}
+        kustomize edit set image PROJECT/IMAGE=${{ vars.DOCKER_USERNAME }}/projects:${{ github.sha }}
     # - name: Deploy manifests
     #   uses: azure/k8s-deploy@v4
     #   with:
