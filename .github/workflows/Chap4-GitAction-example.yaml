@@ -63,17 +63,26 @@ jobs:
       with:
         resource-group: "rg1"
         cluster-name: "myAKSCluster"
-
+    # 1. Update the image tag in kustomization.yaml
+    - name: Update image tag
+      run: |
+        cd "Kubernetes/Chapter-4 Cloud/GitHub Actions-Pipeline"
+        kustomize edit set image <your-image-name>=${{ vars.DOCKER_USERNAME }}/projects:${{ github.sha }}
     # - name: Deploy manifests
     #   uses: azure/k8s-deploy@v4
     #   with:
     #     manifests: |
     #       k8s/deployment.yaml
     #       k8s/service.yaml
+    # 2. Render the final manifests using kustomize
+    - name: Build Kustomize manifests
+      run: |
+        kustomize build "Kubernetes/Chapter-4 Cloud/GitHub Actions-Pipeline" > compiled-manifests.yaml
     - name: Deploy using Kustomize
       uses: azure/k8s-deploy@v4
       with:
         action: deploy
-        kustomization-path: "Kubernetes/Chapter-4 Cloud/GitHub Actions-Pipeline"
+        manifests: |
+          compiled-manifests.yaml
 
 
