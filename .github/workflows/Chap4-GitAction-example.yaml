@@ -44,3 +44,6 @@ jobs:
                 # ghcr.io/${{vars.DOCKER_USERNAME}}/projects:${{github.sha}}
 ## Next Login into azure portal ,give necessary access permission
 
+
+
+
