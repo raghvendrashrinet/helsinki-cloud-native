@@ -64,7 +64,10 @@ jobs:
       with:
         resource-group: "rg1"
         cluster-name: "myAKSCluster"
-    # 1. Update the image tag in kustomization.yaml
+    # 1. Install Kustomize CLI on the runner
+    - name: Set up Kustomize
+      uses: imranismail/setup-kustomize@v2
+    # 2. Update the image tag in kustomization.yaml
     - name: Update image tag
       run: |
         cd "Kubernetes/Chapter-4 Cloud/GitHub Actions-Pipeline"
@@ -75,7 +78,7 @@ jobs:
     #     manifests: |
     #       k8s/deployment.yaml
     #       k8s/service.yaml
-    # 2. Render the final manifests using kustomize
+    # 3. Render the final manifests using kustomize
     - name: Build Kustomize manifests
       run: |
         kustomize build "Kubernetes/Chapter-4 Cloud/GitHub Actions-Pipeline" > compiled-manifests.yaml
