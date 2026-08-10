@@ -67,7 +67,7 @@ jobs:
     - name: Update image tag
       run: |
         cd "Kubernetes/Chapter-4 Cloud/GitHub Actions-Pipeline"
-        kustomize edit set image <your-image-name>=${{ vars.DOCKER_USERNAME }}/projects:${{ github.sha }}
+        ustomize edit set image PROJECT/IMAGE=${{ vars.DOCKER_USERNAME }}/projects:${{ github.sha }}
     # - name: Deploy manifests
     #   uses: azure/k8s-deploy@v4
     #   with:
