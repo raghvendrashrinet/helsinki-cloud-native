@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'Kubernetes/Chapter-4 Cloud/GitHub Actions-Pipeline**' # Triggers ONLY when code in project-a changes
+      - 'Kubernetes/Chapter-4 Cloud/GitHub Actions-Pipeline/**' # Triggers ONLY when code in project-a changes
 
 permissions:
   id-token: write
