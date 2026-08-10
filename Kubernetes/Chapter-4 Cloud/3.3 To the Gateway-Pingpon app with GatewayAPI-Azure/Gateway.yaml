@@ -4,7 +4,7 @@ metadata:
   name: agc-gateway
   namespace: default
   annotations:
-    alb.networking.azure.io/alb-frontend-id: /subscriptions/94eb4090-3469-4a04-b56d-0f5af07bdf41/resourceGroups/MC_rg1_myAKSCluster_eastus/providers/Microsoft.ServiceNetworking/trafficControllers/my-agc/frontends/my-frontend
+    alb.networking.azure.io/alb-id: /subscriptions/94eb4090-3469-4a04-b56d-0f5af07bdf41/resourceGroups/rg1/providers/Microsoft.ServiceNetworking/trafficControllers/my-agc
 spec:
   gatewayClassName: azure-alb-external
   listeners:
