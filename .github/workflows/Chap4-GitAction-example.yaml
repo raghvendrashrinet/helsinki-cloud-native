@@ -30,8 +30,7 @@ jobs:
           with:
               registry: ghcr.io
               username: ${{ github.repository_owner }}
-              password: ${{ secrets.GITHUB_TOKEN }}
-			  # GitHub automatically provides a built-in cryptographic token called secrets.GITHUB_TOKEN for every workflow run
+              password: ${{ secrets.GITHUB_TOKEN }}# GitHub automatically provides a built-in cryptographic token called secrets.GITHUB_TOKEN for every workflow run
 
         - name: Build and push
           uses: docker/build-push-action@v5
