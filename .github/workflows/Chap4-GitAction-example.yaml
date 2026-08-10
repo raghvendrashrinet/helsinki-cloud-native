@@ -1,25 +1,44 @@
-name: Deploy Project A
-
+name: pipeline
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'Kubernetes/Chapter-4 Cloud/GitHub Actions-Pipeline/**' # Triggers ONLY when code in project-a changes
-
+    push:
+        branches:
+        - main 
+        - feature/*
+        paths:
+        - 'Kubernetes/Chapter-4 Cloud/GitHub Actions-Pipeline/**'
+# ghcr these permissions are explicilty defined
 permissions:
-  id-token: write
   contents: read
-
+  packages: write
+	
 jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+   build:
+        runs-on: ${{ matrix.operating_system }}
+        strategy:
+            matrix:
+               operating_system: [ ubuntu-latest]
+        steps:
+        -  name: checkout
+           uses:  actions/checkout@v6
+        - name: Docker Login
+          uses: docker/login-action@v3
+          with:
+            username: ${{ vars.DOCKER_USERNAME }}
+            password: ${{ secrets.DOCKER_PASSWORD }}
+            #login into github container registry for pushing image to ghcr also
+        - name: GHCR Login
+          uses: docker/login-action@v3
+          with:
+              registry: ghcr.io
+              username: ${{ github.repository_owner }}
+              password: ${{ secrets.GITHUB_TOKEN }}
+			  # GitHub automatically provides a built-in cryptographic token called secrets.GITHUB_TOKEN for every workflow run
 
-      - name: Build and Deploy Project A
-        run: |
-          cd project-a
-          docker build -t project-a-image:$GITHUB_SHA .
-          # Run Project A deployment steps
+        - name: Build and push
+          uses: docker/build-push-action@v5
+          with:
+           # context: .
+            push: true
+            tags: | 
+                 ${{vars.DOCKER_USERNAME}}/projects:${{github.sha}}
+                # ghcr.io/${{vars.DOCKER_USERNAME}}/projects:${{github.sha}}
