@@ -1,0 +1,25 @@
+name: Deploy Project A
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'C:\Users\rag\Desktop\helsinki-local-repo\helsinki-cloud-native\Kubernetes\Chapter-4 Cloud\GitHub Actions-Pipeline**' # Triggers ONLY when code in project-a changes
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build and Deploy Project A
+        run: |
+          cd project-a
+          docker build -t project-a-image:$GITHUB_SHA .
+          # Run Project A deployment steps
