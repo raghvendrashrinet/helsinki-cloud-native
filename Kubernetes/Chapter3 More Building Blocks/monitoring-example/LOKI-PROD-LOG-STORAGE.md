@@ -100,19 +100,37 @@ In production, object storage is the recommended backend for durability and scal
 
 ## 7. Example Loki storage config
 
-A production-ready Loki config will often include:
+Example for the Grafana Loki Helm chart using Azure Blob Storage. It replaces the filesystem storage settings in your current loki-values.yaml:
 
 ```yaml
+global:
+  # Expand the Azure key from an environment variable injected from a Secret.
+  extraArgs:
+    - "-config.expand-env=true"
+  extraEnvFrom:
+    - secretRef:
+        name: loki-azure-storage
+
 loki:
-  commonConfig:
-    replication_factor: 3
+  useTestSchema: false
+  schemaConfig:
+    configs:
+      - from: "2024-04-01"
+        store: tsdb
+        object_store: azure
+        schema: v13
+        index:
+          prefix: loki_index_
+          period: 24h
+
   storage:
-    type: s3
-    s3:
-      endpoint: s3.amazonaws.com
-      bucketnames: loki-logs-prod
-      access_key_id: <REDACTED>
-      secret_access_key: <REDACTED>
+    type: azure
+    bucketNames:
+      chunks: loki-chunks
+      ruler: loki-ruler
+    azure:
+      accountName: <your-storage-account-name>
+      accountKey: ${AZURE_STORAGE_ACCOUNT_KEY}
 ```
 
 For local testing or low-scale environments, filesystem storage is acceptable, but it is not ideal for production.
